@@ -118,6 +118,7 @@ public enum Registry {
             return;
         } else {
             initedDbs.add(dbName);
+            ModelFinder.unregisterModelClasses(dbName);
         }
 
         try {
@@ -129,7 +130,7 @@ public enum Registry {
             DatabaseMetaData databaseMetaData = c.getMetaData();
             //TODO: this is called databaseProductName, dbType or dbProduct throughtout the code; use unique name?
             String databaseProductName = c.getMetaData().getDatabaseProductName();
-            List<Class<? extends Model>> modelClasses = ModelFinder.getModelsForDb(dbName);
+            Collection<Class<? extends Model>> modelClasses = ModelFinder.getModelsForDb(dbName);
             registerModels(dbName, modelClasses, databaseProductName);
             String[] tables = metaModels.getTableNames(dbName);
 
@@ -222,7 +223,7 @@ public enum Registry {
      * @param modelClasses
      * @param dbType this is a name of a DBMS as returned by JDBC driver, such as Oracle, MySQL, etc.
      */
-    private void registerModels(String dbName, List<Class<? extends Model>> modelClasses, String dbType) {
+    private void registerModels(String dbName, Collection<Class<? extends Model>> modelClasses, String dbType) {
         for (Class<? extends Model> modelClass : modelClasses) {
             MetaModel mm = new MetaModel(dbName, modelClass, dbType);
             metaModels.addMetaModel(mm, modelClass);
@@ -230,7 +231,7 @@ public enum Registry {
         }
     }
 
-    private void processOverrides(List<Class<? extends Model>> models) {
+    private void processOverrides(Collection<Class<? extends Model>> models) {
 
         for(Class<? extends Model> modelClass : models){
 
@@ -425,5 +426,9 @@ public enum Registry {
 
     private void registerColumnMetadata(String table, Map<String, ColumnMetadata> metaParams) {
         metaModels.setColumnMetadata(table, metaParams);
+    }
+    
+    synchronized public void resetInitializedFlag(String dbName) {
+    	initedDbs.remove(dbName);
     }
 }

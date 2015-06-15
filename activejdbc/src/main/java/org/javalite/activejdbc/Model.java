@@ -31,6 +31,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Clob;
@@ -38,6 +39,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.util.*;
+
 import org.javalite.activejdbc.conversion.BlankToNullConverter;
 import org.javalite.activejdbc.conversion.ZeroToNullConverter;
 import org.javalite.activejdbc.dialects.Dialect;
@@ -1726,6 +1728,29 @@ public abstract class Model extends CallbackSupport implements Externalizable {
         return get(tableName, null);
     }
 
+    /**
+     * This methods supports one to many, many to many relationships as well as polymorphic associations.
+     * <p/>
+     * In case of one to many, the <code>className</code>  must be a class of a child model, and it will return a
+     * collection of all children.
+     * <p/>
+     * In case of many to many, the <code>className</code>  must be a class of a another related model, and it will return a
+     * collection of all related models.
+     * <p/>
+     * In case of polymorphic, the <code>className</code>  must be a class of a polymorphically related model, and it will return a
+     * collection of all related models.
+     *
+     *
+     * @param className class of a child model for one to many, or class of another model, in case of many to many or class of child in case of
+     * polymorphic
+     *
+     * @return list of children in case of one to many, or list of other models, in case many to many.
+     * @throws ClassNotFoundException 
+     */
+
+    public <C extends Model> LazyList<C> getAll(String className) throws ClassNotFoundException {
+    	return getAll((Class<C>) Class.forName(className));
+    }
 
     /**
      * Provides a list of child models in one to many, many to many and polymorphic associations, but in addition also allows to filter this list

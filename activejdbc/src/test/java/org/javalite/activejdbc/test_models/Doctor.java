@@ -23,6 +23,6 @@ import org.javalite.activejdbc.annotations.Cached;
 /**
  * @author Igor Polevoy
  */
-@Cached
+//@Cached
 public class Doctor extends Model {
 }
