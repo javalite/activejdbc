@@ -225,7 +225,7 @@ IF object_id('dbo.pages') IS NOT NULL
 BEGIN
     DROP TABLE [dbo].[pages]
 END
-CREATE TABLE pages ( id INT IDENTITY PRIMARY KEY, description VARCHAR(56), word_count INT);
+CREATE TABLE pages ( id INT IDENTITY PRIMARY KEY, description VARCHAR(56), word_count INT, [order] INT);
 
 
 IF object_id('dbo.watermelons') IS NOT NULL

@@ -635,7 +635,7 @@ end;
 
 
 -- BREAK
-CREATE TABLE pages ( id NUMBER NOT NULL, description VARCHAR(56), word_count NUMBER)
+CREATE TABLE pages ( id NUMBER NOT NULL, description VARCHAR(56), word_count NUMBER, "order" NUMBER)
 -- BREAK
 ALTER TABLE pages ADD CONSTRAINT pages_pk PRIMARY KEY ( id )
 -- BREAK

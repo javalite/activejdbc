@@ -109,7 +109,7 @@ DROP TABLE IF EXISTS plants;
 CREATE TABLE plants (id  serial PRIMARY KEY, plant_name VARCHAR(56), category VARCHAR(56), created_at TIMESTAMP, updated_at TIMESTAMP);
 
 DROP TABLE IF EXISTS pages;
-CREATE TABLE pages ( id serial PRIMARY KEY, description VARCHAR(56), word_count INT);
+CREATE TABLE pages ( id serial PRIMARY KEY, description VARCHAR(56), word_count INT, "order" INT);
 
 
 DROP TABLE IF EXISTS watermelons;

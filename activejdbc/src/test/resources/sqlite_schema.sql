@@ -109,7 +109,7 @@ DROP TABLE IF EXISTS plants;
 CREATE TABLE plants (id  INTEGER PRIMARY KEY AUTOINCREMENT , plant_name VARCHAR(56), category VARCHAR(56), created_at DATETIME, updated_at DATETIME);
 
 DROP TABLE IF EXISTS pages;
-CREATE TABLE pages ( id INTEGER PRIMARY KEY AUTOINCREMENT , description VARCHAR(56), word_count int(11) );
+CREATE TABLE pages ( id INTEGER PRIMARY KEY AUTOINCREMENT , description VARCHAR(56), word_count int(11), "order" int(11));
 
 
 DROP TABLE IF EXISTS watermelons;

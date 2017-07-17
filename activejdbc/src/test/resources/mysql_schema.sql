@@ -109,7 +109,7 @@ DROP TABLE IF EXISTS plants;
 CREATE TABLE plants (id  int(11) NOT NULL  auto_increment PRIMARY KEY, plant_name VARCHAR(56), category VARCHAR(56), created_at DATETIME, updated_at DATETIME) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS pages;
-CREATE TABLE pages ( id int(11) NOT NULL  auto_increment PRIMARY KEY, description VARCHAR(56), word_count int(11) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE pages ( id int(11) NOT NULL  auto_increment PRIMARY KEY, description VARCHAR(56), word_count int(11), `order` int(11) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 DROP TABLE IF EXISTS watermelons;

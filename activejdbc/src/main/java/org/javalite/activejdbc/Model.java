@@ -15,6 +15,7 @@ limitations under the License.
 */
 package org.javalite.activejdbc;
 
+import org.javalite.activejdbc.annotations.ColumnsEscaping;
 import org.javalite.activejdbc.annotations.CompositePK;
 import org.javalite.activejdbc.associations.*;
 import org.javalite.activejdbc.cache.QueryCache;
@@ -2694,9 +2695,15 @@ public abstract class Model extends CallbackSupport implements Externalizable {
         MetaModel metaModel = metaModelLocal;
         List<String> columns = new ArrayList<>();
         List<Object> values = new ArrayList<>();
+        ColumnsEscaping escaping = metaModel.getModelClass().getAnnotation(ColumnsEscaping.class);
+        List<String> columnsToEscape = escaping != null ? Arrays.asList(escaping.columns()) : null;
         for (Map.Entry<String, Object> entry : attributes.entrySet()) {
             if (entry.getValue() != null && !metaModel.getVersionColumn().equals(entry.getKey())) {
-                columns.add(entry.getKey());
+                if (columnsToEscape != null && columnsToEscape.contains(entry.getKey())) {
+                    columns.add(escaping.openEscapingChar() + entry.getKey() + escaping.closeEscapingChar());
+                } else {
+                    columns.add(entry.getKey());
+                }
                 values.add(entry.getValue());
             }
         }
@@ -2758,6 +2765,15 @@ public abstract class Model extends CallbackSupport implements Externalizable {
         StringBuilder query = new StringBuilder().append("UPDATE ").append(metaModel.getTableName()).append(" SET ");
         Set<String> attributeNames = metaModel.getAttributeNamesSkipGenerated(manageTime);
         attributeNames.retainAll(dirtyAttributeNames);
+        ColumnsEscaping escaping = metaModel.getModelClass().getAnnotation(ColumnsEscaping.class);
+        if (escaping != null) {
+            List<String> columnsToEscape = Arrays.asList(escaping.columns());
+            columnsToEscape.stream().filter(attributeNames::contains).forEach(column -> {
+                attributeNames.remove(column);
+                attributeNames.add(escaping.openEscapingChar() + column + escaping.closeEscapingChar());
+            });
+
+        }
         if(attributeNames.size() > 0) {
             join(query, attributeNames, " = ?, ");
             query.append(" = ?");
