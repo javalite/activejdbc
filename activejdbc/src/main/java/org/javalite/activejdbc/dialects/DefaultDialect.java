@@ -152,7 +152,7 @@ public class DefaultDialect implements Dialect {
     }
 
     @Override
-    public String selectManyToManyAssociation(Many2ManyAssociation association, String sourceFkColumnName, int questionsCount) {
+    public String selectManyToManyAssociation(Many2ManyAssociation association, String sourceFkColumnName, int questionsCount, List<String> orderBys) {
         String targetTable = metaModelOf(association.getTargetClass()).getTableName();
         StringBuilder query = new StringBuilder().append("SELECT ").append(targetTable).append(".*, t.")
                 .append(association.getSourceFkName()).append(" AS ").append(sourceFkColumnName).append(" FROM ")
@@ -162,6 +162,10 @@ public class DefaultDialect implements Dialect {
                 .append(" IN (");
         appendQuestions(query, questionsCount);
         query.append(')');
+        if (orderBys.size() > 0) {
+            query.append(" ORDER BY ");
+            query.append(String.join(", ", orderBy));
+        }
         return query.toString();
     }
 

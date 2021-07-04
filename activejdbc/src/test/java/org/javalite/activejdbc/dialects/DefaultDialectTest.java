@@ -128,7 +128,7 @@ public class DefaultDialectTest extends ActiveJDBCTest {
         String query = dialect.selectManyToManyAssociation(
                 association,
                 "programmer_id",
-                1);
+                1, new ArrayList<String>());
 
         a(query).shouldBeEqual(expectedJoinQuery);
     }

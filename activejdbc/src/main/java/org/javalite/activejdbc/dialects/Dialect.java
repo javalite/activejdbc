@@ -43,7 +43,7 @@ public interface Dialect extends Serializable{
 
     String selectExists(MetaModel mm);
 
-    String selectManyToManyAssociation(Many2ManyAssociation association, String sourceFkColumnName, int questionsCount);
+    String selectManyToManyAssociation(Many2ManyAssociation association, String sourceFkColumnName, int questionsCount, List<String> orderBys);
 
     String insertManyToManyAssociation(Many2ManyAssociation association);
 

@@ -49,6 +49,7 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
     private long limit = -1, offset = -1;
     private final List<Association> includes = new ArrayList<>();
     private final boolean forPaginator;
+    private final Map<String, List<String>> associationOrderBys = new HashMap<>();;
 
     protected LazyList(String subQuery, MetaModel metaModel, Object... params) {
         this.fullQuery = null;
@@ -56,6 +57,14 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
         this.params = params == null? new Object[]{}: params;
         this.metaModel = metaModel;
         this.forPaginator = false;
+    }
+    protected LazyList(String subQuery, MetaModel metaModel, List<String> orderBys, Object... params) {
+        this.fullQuery = null;
+        this.subQuery = subQuery;
+        this.params = params == null? new Object[]{}: params;
+        this.metaModel = metaModel;
+        this.forPaginator = false;
+        this.orderBys.addAll(orderBys);
     }
 
     /**
@@ -138,6 +147,27 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
 
         orderBys.add(orderBy);
         return (LazyList<E>) this;
+    }
+
+
+    /**
+     * Use this method to order associated object results by a column. These methods can be chained:
+     * <code>Person.find(...).orderAssociationBy(Author.class, "first_name").orderAssociationBy(Comment.class, "date")</code>
+     *
+     * @param associate a dependent class. This class represents a model with which a current model has a relationship.
+     * @param orderBy order by clause. Examples: "department", "age desc", etc.
+     * @return instance of this <code>LazyList</code>
+     */
+    public <E extends Model>  LazyList<E> orderAssociationBy(Class<? extends Model> associate, String orderBy){
+        for (Class<? extends Model> clazz : classes) {
+            if(!metaModel.isAssociatedTo(clazz)) throw new IllegalArgumentException("Model: " + clazz.getName() + " is not associated with: " + metaModel.getModelClass().getName());
+
+        }
+
+        String associateName = associate.getName();
+        List<String> orders = associationOrderBys.computeIfAbsent(associateName, a -> new ArrayList<>());
+        orders.add(orderBy);
+        associationOrderBys.put(associateName, orders);
     }
 
 
@@ -372,7 +402,7 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
         StringBuilder query = new StringBuilder().append(parentMetaModel.getIdName()).append(" IN (");
         appendQuestions(query, distinctParentIds.size());
         query.append(')');
-        for (Model parent : new LazyList<>(query.toString(), parentMetaModel, distinctParentIds.toArray())) {
+        for (Model parent : new LazyList<>(query.toString(), parentMetaModel, associationOrderBys.computeIfAbsent(association.getTargetClass().getName(), a -> new ArrayList<>()), distinctParentIds.toArray())) {
             parentById.put(association.getParentClassName() + ":" + parent.getId(), parent);
         }
 
@@ -400,7 +430,7 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
         StringBuilder query = new StringBuilder().append(parentMetaModel.getIdName()).append(" IN (");
         appendQuestions(query, distinctParentIds.size());
         query.append(')');
-        for (Model parent : new LazyList<>(query.toString(), parentMetaModel, distinctParentIds.toArray())) {
+        for (Model parent : new LazyList<>(query.toString(), parentMetaModel, associationOrderBys.computeIfAbsent(association.getTargetClass().getName(), a -> new ArrayList<>()), distinctParentIds.toArray())) {
             parentById.put(parent.getId(), parent);
         }
         //now that we have the parents in the has, we need to distribute them into list of children that are
@@ -482,7 +512,10 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
         StringBuilder query = new StringBuilder().append("parent_id IN (");
         appendQuestions(query, ids.size());
         query.append(") AND parent_type = '").append(association.getTypeLabel()).append('\'');
-        for (Model child : new LazyList<>(query.toString(), childMetaModel, ids.toArray()).orderBy(childMetaModel.getIdName())) {
+
+        List<String> orders = associationOrderBys.computeIfAbsent(association.getTargetClass().getName(), a -> new ArrayList<>());
+        orders.add(0, childMetaModel.getIdName());
+        for (Model child : new LazyList<>(query.toString(), childMetaModel, orders, ids.toArray())) {
             if (childrenByParentId.get(child.get("parent_id")) == null) {
                 childrenByParentId.put(child.get("parent_id"), new SuperLazyList<>());
             }
@@ -505,14 +538,17 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
         if(delegate.isEmpty()){//no need to process children if no models selected.
             return;
         }
-        final MetaModel childMetaModel = metaModelOf(association.getTargetClass());
+        final Class<? extends Model> associate = association.getTargetClass();
+        final MetaModel childMetaModel = metaModelOf(associate);
         final String fkName = association.getFkName();
         final Map<Object, List<Model>> childrenByParentId = new HashMap<>();
         List<Object> ids = collect(metaModel.getIdName());
         StringBuilder query = new StringBuilder().append(fkName).append(" IN (");
         appendQuestions(query, ids.size());
         query.append(')');
-        for (Model child : new LazyList<>(query.toString(), childMetaModel, ids.toArray()).orderBy(childMetaModel.getIdName())) {
+        List<String> orders = associationOrderBys.computeIfAbsent(associate.getName(), a -> new ArrayList<>());
+        orders.add(0, childMetaModel.getIdName());
+        for (Model child : new LazyList<>(query.toString(), childMetaModel, orders, ids.toArray())) {
             if(childrenByParentId.get(child.get(fkName)) == null){
                 childrenByParentId.put(child.get(fkName), new SuperLazyList<>());
             }
@@ -533,11 +569,14 @@ public class LazyList<T extends Model> extends AbstractLazyList<T> implements Ex
         if(delegate.isEmpty()){//no need to process other if no models selected.
             return;
         }
-        final MetaModel childMetaModel = metaModelOf(association.getTargetClass());
+        final Class<? extends Model> associate = association.getTargetClass();
+        final MetaModel childMetaModel = metaModelOf(associate);
         final Map<Object, List<Model>> childrenByParentId = new HashMap<>();
         List<Object> ids = collect(metaModel.getIdName());
+        List<String> orders = associationOrderBys.computeIfAbsent(associate.getName(), a -> new ArrayList<>());
+        orders.add(0, childMetaModel.getIdName());
         List<Map> childResults = new DB(childMetaModel.getDbName()).findAll(childMetaModel.getDialect().selectManyToManyAssociation(
-                association, "the_parent_record_id", ids.size()), ids.toArray());
+                association, "the_parent_record_id", ids.size(), orders), ids.toArray());
         for(Map res: childResults){
             Model child = ModelDelegate.instance(res, childMetaModel);
             Object parentId = res.get("the_parent_record_id");
